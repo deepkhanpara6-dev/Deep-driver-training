@@ -25,9 +25,8 @@
 
         h2 { color: #002d72; margin-top: 10px; }
         
-        /* The Video Area */
         #video-wrapper {
-            position: relative; /* Crucial for the shield to work */
+            position: relative; 
             width: 100%; 
             aspect-ratio: 16 / 9; 
             margin-top: 20px; 
@@ -41,8 +40,6 @@
             height: 100%; 
         }
 
-        /* THIS IS THE INVISIBLE SHIELD */
-        /* It sits over the video so drivers cannot tap the screen to skip */
         #video-shield {
             position: absolute;
             top: 0; 
@@ -104,12 +101,13 @@
         var player;
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
+                // REMEMBER TO PUT YOUR 11-LETTER YOUTUBE ID BACK IN HERE!
                 videoId: 'JKeDqTbi7_M', 
                 playerVars: {
                     'playsinline': 1,
-                    'controls': 0,      /* Hides the bottom progress bar */
-                    'disablekb': 1,     /* Disables keyboard skipping */
-                    'rel': 0,           /* Stops random videos from showing at the end */
+                    'controls': 0,      
+                    'disablekb': 1,     
+                    'rel': 0,           
                     'modestbranding': 1
                 },
                 events: {
@@ -118,15 +116,16 @@
             });
         }
 
-        // The Start Button triggers the video beneath the shield
         document.getElementById('play-btn').addEventListener('click', function() {
             player.playVideo();
             this.style.display = 'none'; 
         });
 
-        // Listens for the exact moment the video ends to reveal the form
         function onPlayerStateChange(event) {
             if (event.data == YT.PlayerState.ENDED) {
+                // THIS IS THE NEW LINE: It completely hides the video box!
+                document.getElementById('video-wrapper').style.display = 'none';
+
                 document.getElementById('form-container').style.display = 'block';
                 document.getElementById('instruction-text').innerText = "Please fill out the form below to register your tanker.";
             }
