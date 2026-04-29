@@ -24,8 +24,21 @@
         }
 
         h2 { color: #002d72; margin-top: 10px; }
+
+        /* Location Status Message Styling */
+        #location-status {
+            font-size: 16px;
+            font-weight: bold;
+            color: #d9534f;
+            margin: 20px 0;
+            padding: 15px;
+            background: #fdf5f5;
+            border: 1px solid #d9534f;
+            border-radius: 5px;
+        }
         
         #video-wrapper {
+            display: none; 
             position: relative; 
             width: 100%; 
             aspect-ratio: 16 / 9; 
@@ -35,17 +48,12 @@
             overflow: hidden;
         }
         
-        #player { 
-            width: 100%; 
-            height: 100%; 
-        }
+        #player { width: 100%; height: 100%; }
 
         #video-shield {
             position: absolute;
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%;
+            top: 0; left: 0; 
+            width: 100%; height: 100%;
             z-index: 10;
             background: transparent;
         }
@@ -55,12 +63,11 @@
             margin-top: 20px; 
         }
         iframe.gform { 
-            width: 100%; 
-            height: 600px; 
-            border: none; 
+            width: 100%; height: 600px; border: none; 
         }
         
         .btn { 
+            display: none; 
             padding: 15px 30px; 
             font-size: 18px; 
             background-color: #0056b3; 
@@ -77,7 +84,9 @@
 
     <div id="app-container">
         <h2>Terminal Safety Training</h2>
-        <p id="instruction-text">Tap Start Training. The attendance form will appear automatically when the video concludes.</p>
+        <p id="instruction-text">Location verification is required to begin the training.</p>
+
+        <div id="location-status">Requesting GPS location... Please tap "Allow" when prompted.</div>
 
         <div id="video-wrapper">
             <div id="video-shield"></div> 
@@ -93,6 +102,62 @@
     </div>
 
     <script>
+        // ==========================================
+        // 1. GATE COORDINATES HAVE BEEN SET HERE
+        // ==========================================
+        const TARGET_LAT = 22.737617; 
+        const TARGET_LNG = 69.707878; 
+        const MAX_RADIUS_METERS = 500; // Driver must be within 500 meters
+        // ==========================================
+
+        const statusText = document.getElementById('location-status');
+        const videoWrapper = document.getElementById('video-wrapper');
+        const playBtn = document.getElementById('play-btn');
+        const instructionText = document.getElementById('instruction-text');
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; 
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; 
+        }
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+                    
+                    const distance = calculateDistance(userLat, userLng, TARGET_LAT, TARGET_LNG);
+
+                    if (distance <= MAX_RADIUS_METERS) {
+                        statusText.style.display = 'none';
+                        videoWrapper.style.display = 'block';
+                        playBtn.style.display = 'block';
+                        instructionText.innerText = "Location verified. Tap Start Training. The attendance form will appear automatically when the video concludes.";
+                    } else {
+                        statusText.innerText = `Location Error: You are ${Math.round(distance)} meters away. You must be at the security gate to complete this training.`;
+                    }
+                },
+                function(error) {
+                    statusText.innerText = "Error: You must allow Location Access on your phone to verify your attendance at the gate.";
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        } else {
+            statusText.innerText = "Geolocation is not supported by your browser.";
+        }
+
+        // ==========================================
+        // 2. YOUTUBE API AND VIDEO LOGIC
+        // ==========================================
         var tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
         var firstScriptTag = document.getElementsByTagName('script')[0];
@@ -101,7 +166,7 @@
         var player;
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
-                // REMEMBER TO PUT YOUR 11-LETTER YOUTUBE ID BACK IN HERE!
+                // DON'T FORGET: Paste your 11-letter YouTube ID right here before saving!
                 videoId: 'JKeDqTbi7_M', 
                 playerVars: {
                     'playsinline': 1,
@@ -116,16 +181,14 @@
             });
         }
 
-        document.getElementById('play-btn').addEventListener('click', function() {
+        playBtn.addEventListener('click', function() {
             player.playVideo();
             this.style.display = 'none'; 
         });
 
         function onPlayerStateChange(event) {
             if (event.data == YT.PlayerState.ENDED) {
-                // THIS IS THE NEW LINE: It completely hides the video box!
                 document.getElementById('video-wrapper').style.display = 'none';
-
                 document.getElementById('form-container').style.display = 'block';
                 document.getElementById('instruction-text').innerText = "Please fill out the form below to register your tanker.";
             }
