@@ -1,196 +1,155 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terminal Safety Training</title>
+    <title>टर्मिनल सुरक्षा ट्रेनिंग</title>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            margin: 0; 
-            background-color: #e9ecef; 
-            color: #333;
-        }
-        
-        #app-container {
-            max-width: 450px; 
-            margin: 0 auto; 
-            background: white; 
-            min-height: 100vh;
-            padding: 20px;
-            box-sizing: border-box;
-            text-align: center;
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
-        }
-
+        body { font-family: Arial, sans-serif; margin: 0; background-color: #e9ecef; color: #333; }
+        #app-container { max-width: 450px; margin: 0 auto; background: white; min-height: 100vh; padding: 20px; box-sizing: border-box; text-align: center; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
         h2 { color: #002d72; margin-top: 10px; }
+        
+        #verify-container { margin-top: 30px; }
+        input[type="text"] { width: 90%; padding: 15px; font-size: 16px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; text-transform: uppercase; }
+        #status-msg { margin-top: 15px; font-weight: bold; }
 
-        /* Location Status Message Styling */
-        #location-status {
-            font-size: 16px;
-            font-weight: bold;
-            color: #d9534f;
-            margin: 20px 0;
-            padding: 15px;
-            background: #fdf5f5;
-            border: 1px solid #d9534f;
-            border-radius: 5px;
-        }
+        #location-status { display: none; font-size: 16px; font-weight: bold; color: #d9534f; margin: 20px 0; padding: 15px; background: #fdf5f5; border: 1px solid #d9534f; border-radius: 5px; }
         
-        #video-wrapper {
-            display: none; 
-            position: relative; 
-            width: 100%; 
-            aspect-ratio: 16 / 9; 
-            margin-top: 20px; 
-            background: #000;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        
+        #video-wrapper { display: none; position: relative; width: 100%; aspect-ratio: 16 / 9; margin-top: 20px; background: #000; border-radius: 8px; overflow: hidden; }
         #player { width: 100%; height: 100%; }
-
-        #video-shield {
-            position: absolute;
-            top: 0; left: 0; 
-            width: 100%; height: 100%;
-            z-index: 10;
-            background: transparent;
-        }
+        #video-shield { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; background: transparent; }
         
-        #form-container { 
-            display: none; 
-            margin-top: 20px; 
-        }
-        iframe.gform { 
-            width: 100%; height: 600px; border: none; 
-        }
+        #form-container { display: none; margin-top: 20px; }
+        iframe.gform { width: 100%; height: 600px; border: none; }
         
-        .btn { 
-            display: none; 
-            padding: 15px 30px; 
-            font-size: 18px; 
-            background-color: #0056b3; 
-            color: white; 
-            border: none; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            margin-top: 15px;
-            width: 100%;
-        }
+        .btn { padding: 15px 30px; font-size: 18px; background-color: #0056b3; color: white; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
+        .btn:disabled { background-color: #999; }
+        #play-btn { display: none; margin-top: 15px; }
     </style>
 </head>
 <body>
 
     <div id="app-container">
-        <h2>Terminal Safety Training</h2>
-        <p id="instruction-text">Location verification is required to begin the training.</p>
+        <h2>टर्मिनल सुरक्षा सत्यापन</h2>
+        
+        <div id="verify-container">
+            <p>अपनी ट्रेनिंग स्थिति की जांच करने के लिए अपना <strong>ड्राइविंग लाइसेंस नंबर</strong> दर्ज करें।</p>
+            <input type="text" id="license-input" placeholder="उदाहरण: GJ0120240012345" required>
+            <button id="check-btn" class="btn" onclick="checkDatabase()">स्थिति जांचें</button>
+            <div id="status-msg"></div>
+        </div>
 
-        <div id="location-status">Requesting GPS location... Please tap "Allow" when prompted.</div>
+        <div id="location-status">GPS लोकेशन जांची जा रही है... कृपया 'Allow' पर टैप करें।</div>
 
         <div id="video-wrapper">
             <div id="video-shield"></div> 
             <div id="player"></div>
         </div>
-
-        <button id="play-btn" class="btn">Start Training</button>
+        <button id="play-btn" class="btn">वीडियो शुरू करें</button>
 
         <div id="form-container">
-            <h3>Training Complete. Please log your details:</h3>
+            <h3>ट्रेनिंग पूरी हुई। कृपया अपना विवरण दर्ज करें:</h3>
             <iframe class="gform" src="https://docs.google.com/forms/d/e/1FAIpQLSdlLC04kRj8tT4mE4QiepU_Jz1JtS8aGKjwvyHdDqO20xLvcw/viewform?embedded=true"></iframe>
         </div>
     </div>
 
     <script>
         // ==========================================
-        // 1. GATE COORDINATES HAVE BEEN SET HERE
+        // CONFIGURATION VARIABLES 
         // ==========================================
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyQsiynrpklDWLVVNl5EmSax1MzgRd_pcpIrX7I-RuMRIidnXolCUDKN9e24L76OP9etQ/exec';
         const TARGET_LAT = 22.737617; 
         const TARGET_LNG = 69.707878; 
-        const MAX_RADIUS_METERS = 500; // Driver must be within 500 meters
+        const MAX_RADIUS_METERS = 500; 
         // ==========================================
 
-        const statusText = document.getElementById('location-status');
+        const verifyContainer = document.getElementById('verify-container');
+        const statusMsg = document.getElementById('status-msg');
+        const locStatus = document.getElementById('location-status');
         const videoWrapper = document.getElementById('video-wrapper');
         const playBtn = document.getElementById('play-btn');
-        const instructionText = document.getElementById('instruction-text');
+
+        // Pings Google Sheets to check the license
+        function checkDatabase() {
+            const license = document.getElementById('license-input').value.trim();
+            if(!license) { alert("कृपया अपना ड्राइविंग लाइसेंस नंबर दर्ज करें"); return; }
+
+            document.getElementById('check-btn').innerText = "डेटाबेस की जांच हो रही है...";
+            document.getElementById('check-btn').disabled = true;
+
+            fetch(`${GOOGLE_SCRIPT_URL}?license=${encodeURIComponent(license)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if(data.valid === true) {
+                        // VALID! Clear them for entry.
+                        verifyContainer.style.display = 'none';
+                        document.getElementById('app-container').innerHTML += `<div style="background-color: #d4edda; color: #155724; padding: 20px; border-radius: 8px; border: 1px solid #c3e6cb; margin-top: 20px;">
+                            <h3 style="margin-top:0;">✅ प्रवेश स्वीकृत</h3>
+                            <p>लाइसेंस नंबर: <strong>${license}</strong></p>
+                            <p>आपकी ट्रेनिंग मान्य है। कृपया सुरक्षा गेट की ओर बढ़ें।</p>
+                        </div>`;
+                    } else {
+                        // INVALID! Start the GPS and Video process.
+                        verifyContainer.style.display = 'none';
+                        startGPSCheck();
+                    }
+                })
+                .catch(error => {
+                    statusMsg.innerText = "नेटवर्क त्रुटि। कृपया पुनः प्रयास करें।";
+                    document.getElementById('check-btn').innerText = "स्थिति जांचें";
+                    document.getElementById('check-btn').disabled = false;
+                });
+        }
+
+        // GPS Logic
+        function startGPSCheck() {
+            locStatus.style.display = 'block';
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const dist = calculateDistance(position.coords.latitude, position.coords.longitude, TARGET_LAT, TARGET_LNG);
+                        if (dist <= MAX_RADIUS_METERS) {
+                            locStatus.style.display = 'none';
+                            videoWrapper.style.display = 'block';
+                            playBtn.style.display = 'block';
+                        } else {
+                            locStatus.innerText = `लोकेशन त्रुटि: आप गेट से ${Math.round(dist)} मीटर दूर हैं। आपका सुरक्षा गेट पर होना अनिवार्य है।`;
+                        }
+                    },
+                    function(error) { locStatus.innerText = "त्रुटि: लोकेशन की अनुमति दें (Allow) ताकि गेट पर आपकी उपस्थिति जांची जा सके।"; },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            } else {
+                locStatus.innerText = "आपके फोन में लोकेशन समर्थित नहीं है।";
+            }
+        }
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3; 
-            const φ1 = lat1 * Math.PI / 180;
-            const φ2 = lat2 * Math.PI / 180;
-            const Δφ = (lat2 - lat1) * Math.PI / 180;
-            const Δλ = (lon2 - lon1) * Math.PI / 180;
-
-            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-                      Math.cos(φ1) * Math.cos(φ2) *
-                      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c; 
+            const R = 6371e3; const φ1 = lat1 * Math.PI / 180; const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180; const Δλ = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); 
         }
 
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    const userLat = position.coords.latitude;
-                    const userLng = position.coords.longitude;
-                    
-                    const distance = calculateDistance(userLat, userLng, TARGET_LAT, TARGET_LNG);
-
-                    if (distance <= MAX_RADIUS_METERS) {
-                        statusText.style.display = 'none';
-                        videoWrapper.style.display = 'block';
-                        playBtn.style.display = 'block';
-                        instructionText.innerText = "Location verified. Tap Start Training. The attendance form will appear automatically when the video concludes.";
-                    } else {
-                        statusText.innerText = `Location Error: You are ${Math.round(distance)} meters away. You must be at the security gate to complete this training.`;
-                    }
-                },
-                function(error) {
-                    statusText.innerText = "Error: You must allow Location Access on your phone to verify your attendance at the gate.";
-                },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-            );
-        } else {
-            statusText.innerText = "Geolocation is not supported by your browser.";
-        }
-
-        // ==========================================
-        // 2. YOUTUBE API AND VIDEO LOGIC
-        // ==========================================
-        var tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        var firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
+        // YouTube API
+        var tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0]; firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
         var player;
+        
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
-                // DON'T FORGET: Paste your 11-letter YouTube ID right here before saving!
                 videoId: 'JKeDqTbi7_M', 
-                playerVars: {
-                    'playsinline': 1,
-                    'controls': 0,      
-                    'disablekb': 1,     
-                    'rel': 0,           
-                    'modestbranding': 1
-                },
-                events: {
-                    'onStateChange': onPlayerStateChange
-                }
+                playerVars: { 'playsinline': 1, 'controls': 0, 'disablekb': 1, 'rel': 0, 'modestbranding': 1 },
+                events: { 'onStateChange': onPlayerStateChange }
             });
         }
 
-        playBtn.addEventListener('click', function() {
-            player.playVideo();
-            this.style.display = 'none'; 
-        });
+        playBtn.addEventListener('click', function() { player.playVideo(); this.style.display = 'none'; });
 
         function onPlayerStateChange(event) {
             if (event.data == YT.PlayerState.ENDED) {
-                document.getElementById('video-wrapper').style.display = 'none';
+                videoWrapper.style.display = 'none';
                 document.getElementById('form-container').style.display = 'block';
-                document.getElementById('instruction-text').innerText = "Please fill out the form below to register your tanker.";
             }
         }
     </script>
