@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>टर्मिनल सुरक्षा ट्रेनिंग</title>
-    <!-- Premium PDF Generation Engine Included -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; background-color: #e9ecef; color: #333; }
@@ -36,7 +35,6 @@
         #play-btn { display: none; margin-top: 15px; }
         
         .success-box { background-color: #d4edda; color: #155724; padding: 20px; border-radius: 8px; border: 1px solid #c3e6cb; margin-top: 20px; text-align: center; line-height: 1.5; }
-        .audio-btn { background-color: #f8f9fa; border: 1px solid #ced4da; color: #495057; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-size: 14px; margin-top: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -47,8 +45,7 @@
         <!-- STEP 1: Name, TT Number, and License Input -->
         <div id="verify-container">
             <p>अपनी ट्रेनिंग स्थिति की जांच करने के लिए विवरण दर्ज करें।</p>
-            <button class="audio-btn" onclick="speakText('अपनी ट्रेनिंग स्थिति की जांच करने के लिए अपना नाम, टैंकर नंबर और ड्राइविंग लाइसेंस नंबर दर्ज करें।')">🔊 निर्देश सुनें</button>
-            <br><br>
+            <br>
             
             <input type="text" id="driver-name-input" placeholder="ड्राइवर का नाम दर्ज करें" required autocomplete="off">
             <input type="text" id="tt-number-input" placeholder="टैंकर नंबर (उदा: GJ12AB3456)" required autocomplete="off">
@@ -102,7 +99,6 @@
                 <h3 style="margin-top:0; color: #155724;">🎉 ट्रेनिंग पूरी हुई!</h3>
                 <p>आपका सुरक्षा सर्टिफिकेट आपके फोन पर डाउनलोड हो गया है।</p>
                 <p>कृपया नीचे अपना डेटा सबमिट करें।</p>
-                <button class="audio-btn" onclick="speakText('ट्रेनिंग पूरी हुई। आपका सुरक्षा सर्टिफिकेट आपके फोन पर डाउनलोड हो गया है। कृपया नीचे दिए गए फॉर्म को सबमिट करें।')">🔊 सुनें</button>
             </div>
             
             <!-- Google Form Iframe -->
@@ -153,19 +149,6 @@
         licenseInput.addEventListener('input', function(e) { this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
 
         // ==========================================
-        // FEATURE: TEXT-TO-SPEECH
-        // ==========================================
-        function speakText(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); 
-                let utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'hi-IN'; 
-                utterance.rate = 0.9; 
-                window.speechSynthesis.speak(utterance);
-            }
-        }
-
-        // ==========================================
         // STEP 1: DATABASE CHECK
         // ==========================================
         function checkDatabase() {
@@ -197,9 +180,7 @@
                             <p>टैंकर: <strong>${globalTTNumber}</strong></p>
                             <p>लाइसेंस: <strong>${globalLicenseNumber}</strong></p>
                             <p>${successMsg}</p>
-                            <button class="audio-btn" onclick="speakText('${successMsg}')">🔊 सुनें</button>
                         </div>`;
-                        speakText(successMsg); 
                     } else {
                         verifyContainer.style.display = 'none';
                         startGPSCheck();
@@ -229,7 +210,7 @@
                             playBtn.style.display = 'block';
                         } else {
                             const errText = `लोकेशन त्रुटि: आप गेट से ${Math.round(dist)} मीटर दूर हैं। आपका सुरक्षा गेट पर होना अनिवार्य है।`;
-                            locStatus.innerHTML = `${errText} <br><button class="audio-btn" onclick="speakText('${errText}')">🔊 सुनें</button>`;
+                            locStatus.innerHTML = `${errText}`;
                         }
                     },
                     function(error) { 
@@ -240,11 +221,10 @@
                             1. URL बार में <b>ताला (Lock 🔒)</b> पर क्लिक करें।<br>
                             2. <b>Permissions</b> में जाएं।<br>
                             3. Location को <b>Allow</b> करें।<br>
-                            4. इस पेज को <b>रिफ्रेश</b> करें।<br>
-                            <button class="audio-btn" onclick="speakText('${blockText}')">🔊 सुनें</button>`;
+                            4. इस पेज को <b>रिफ्रेश</b> करें।`;
                         } else {
                             const signalText = "त्रुटि: आपका GPS बंद है या सिग्नल नहीं मिल रहा है। कृपया फोन की लोकेशन चालू करें।";
-                            locStatus.innerHTML = `${signalText} <br><button class="audio-btn" onclick="speakText('${signalText}')">🔊 सुनें</button>`;
+                            locStatus.innerHTML = `${signalText}`;
                         }
                     },
                     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -287,19 +267,17 @@
         }
 
         // ==========================================
-        // STEP 3: THE QUIZ LOGIC (HINDI & VALIDATION)
+        // STEP 3: THE QUIZ LOGIC (VALIDATION FIXED)
         // ==========================================
         function submitQuiz() {
             const q1Ans = document.querySelector('input[name="q1"]:checked');
             const q2Ans = document.querySelector('input[name="q2"]:checked');
             const q3Ans = document.querySelector('input[name="q3"]:checked');
 
-            // NEW VALIDATION: Check if any question is blank
+            // VALIDATION: This prevents the video from restarting if a question is blank
             if (!q1Ans || !q2Ans || !q3Ans) {
-                const warningMsg = "कृपया सभी सवालों के उत्तर दें। सभी सवालों का उत्तर देना अनिवार्य है।";
-                alert(warningMsg);
-                speakText(warningMsg);
-                return; // Stop here, do not submit
+                alert("कृपया सभी सवालों के उत्तर दें। सभी सवालों का उत्तर देना अनिवार्य है।");
+                return; // Stops the process immediately so nothing else happens
             }
 
             let score = 0;
@@ -314,16 +292,12 @@
                 quizContainer.style.display = 'none';
                 formContainer.style.display = 'block';
                 
-                const passAudioMsg = "बधाई हो! आप एक सुरक्षित और प्रशिक्षित ड्राइवर हैं। आपका सर्टिफिकेट डाउनलोड हो रहा है। कृपया फॉर्म भरें।";
-                speakText(passAudioMsg);
-                
                 generateAndDownloadPDF();
                 
             } else {
                 // FAIL! Loop video
                 const failMsg = `आपके पास पर्याप्त ट्रेनिंग की जानकारी नहीं है! आपने 3 में से सिर्फ ${score} का सही जवाब दिया। पास होने के लिए कम से कम 2 सही जवाब चाहिए। कृपया वीडियो को फिर से ध्यान से देखें।`;
                 alert(failMsg);
-                speakText(failMsg);
                 
                 // Reset Quiz Selections
                 document.querySelectorAll('input[type="radio"]').forEach(radio => radio.checked = false);
