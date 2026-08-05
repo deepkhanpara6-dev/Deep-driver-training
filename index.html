@@ -50,9 +50,9 @@
             <button class="audio-btn" onclick="speakText('अपनी ट्रेनिंग स्थिति की जांच करने के लिए अपना नाम, टैंकर नंबर और ड्राइविंग लाइसेंस नंबर दर्ज करें।')">🔊 निर्देश सुनें</button>
             <br><br>
             
-            <input type="text" id="driver-name-input" placeholder="ड्राइवर का नाम (NAME)" required autocomplete="off">
-            <input type="text" id="tt-number-input" placeholder="टैंकर नंबर (TT NUMBER e.g., GJ12AB3456)" required autocomplete="off">
-            <input type="text" id="license-input" placeholder="लाइसेंस नंबर (DL NUMBER)" required autocomplete="off">
+            <input type="text" id="driver-name-input" placeholder="ड्राइवर का नाम दर्ज करें" required autocomplete="off">
+            <input type="text" id="tt-number-input" placeholder="टैंकर नंबर (उदा: GJ12AB3456)" required autocomplete="off">
+            <input type="text" id="license-input" placeholder="लाइसेंस नंबर दर्ज करें" required autocomplete="off">
             
             <button id="check-btn" class="btn" onclick="checkDatabase()">स्थिति जांचें</button>
             <div id="status-msg"></div>
@@ -190,7 +190,7 @@
                 .then(data => {
                     if(data.valid === true) {
                         verifyContainer.style.display = 'none';
-                        const successMsg = "आपकी ट्रेनिंग मान्य है। कृपया सुरक्षा गेट की ओर बढ़ें।";
+                        const successMsg = "बधाई हो! आप एक सुरक्षित और प्रशिक्षित ड्राइवर हैं। आपकी ट्रेनिंग मान्य है। कृपया सुरक्षा गेट की ओर बढ़ें।";
                         document.getElementById('app-container').innerHTML += `<div class="success-box">
                             <h3 style="margin-top:0;">✅ प्रवेश स्वीकृत</h3>
                             <p>नाम: <strong>${globalDriverName}</strong></p>
@@ -270,7 +270,7 @@
         
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
-                videoId: 'JKeDqTbi7_M',
+                videoId: 'Ju-K6c7FiMw',
                 playerVars: { 'playsinline': 1, 'controls': 0, 'disablekb': 1, 'rel': 0, 'modestbranding': 1 },
                 events: { 'onStateChange': onPlayerStateChange }
             });
@@ -287,25 +287,41 @@
         }
 
         // ==========================================
-        // STEP 3: THE QUIZ LOGIC
+        // STEP 3: THE QUIZ LOGIC (HINDI & VALIDATION)
         // ==========================================
         function submitQuiz() {
+            const q1Ans = document.querySelector('input[name="q1"]:checked');
+            const q2Ans = document.querySelector('input[name="q2"]:checked');
+            const q3Ans = document.querySelector('input[name="q3"]:checked');
+
+            // NEW VALIDATION: Check if any question is blank
+            if (!q1Ans || !q2Ans || !q3Ans) {
+                const warningMsg = "कृपया सभी सवालों के उत्तर दें। सभी सवालों का उत्तर देना अनिवार्य है।";
+                alert(warningMsg);
+                speakText(warningMsg);
+                return; // Stop here, do not submit
+            }
+
             let score = 0;
             
             // Check answers
-            if(document.querySelector('input[name="q1"]:checked')?.value === 'correct') score++;
-            if(document.querySelector('input[name="q2"]:checked')?.value === 'correct') score++;
-            if(document.querySelector('input[name="q3"]:checked')?.value === 'correct') score++;
+            if(q1Ans.value === 'correct') score++;
+            if(q2Ans.value === 'correct') score++;
+            if(q3Ans.value === 'correct') score++;
 
             if(score >= 2) {
                 // PASS! 
                 quizContainer.style.display = 'none';
                 formContainer.style.display = 'block';
+                
+                const passAudioMsg = "बधाई हो! आप एक सुरक्षित और प्रशिक्षित ड्राइवर हैं। आपका सर्टिफिकेट डाउनलोड हो रहा है। कृपया फॉर्म भरें।";
+                speakText(passAudioMsg);
+                
                 generateAndDownloadPDF();
                 
             } else {
                 // FAIL! Loop video
-                const failMsg = `Insufficient Training Knowledge! आपने 3 में से सिर्फ ${score} का सही जवाब दिया। आपको पास होने के लिए 2 सही जवाब चाहिए। कृपया वीडियो फिर से ध्यान से देखें।`;
+                const failMsg = `आपके पास पर्याप्त ट्रेनिंग की जानकारी नहीं है! आपने 3 में से सिर्फ ${score} का सही जवाब दिया। पास होने के लिए कम से कम 2 सही जवाब चाहिए। कृपया वीडियो को फिर से ध्यान से देखें।`;
                 alert(failMsg);
                 speakText(failMsg);
                 
