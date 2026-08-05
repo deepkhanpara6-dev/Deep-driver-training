@@ -4,27 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>टर्मिनल सुरक्षा ट्रेनिंग</title>
+    <!-- Premium PDF Generation Engine Included -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; background-color: #e9ecef; color: #333; }
         #app-container { max-width: 450px; margin: 0 auto; background: white; min-height: 100vh; padding: 20px; box-sizing: border-box; text-align: center; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
         h2 { color: #002d72; margin-top: 10px; }
         
         #verify-container { margin-top: 30px; }
-        input[type="text"] { width: 90%; padding: 15px; font-size: 16px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; text-transform: uppercase; }
+        input[type="text"] { width: 90%; padding: 15px; font-size: 16px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; text-transform: uppercase; font-weight: bold; }
         #status-msg { margin-top: 15px; font-weight: bold; }
 
-        #location-status { display: none; font-size: 16px; font-weight: bold; color: #d9534f; margin: 20px 0; padding: 15px; background: #fdf5f5; border: 1px solid #d9534f; border-radius: 5px; }
+        #location-status { display: none; font-size: 16px; font-weight: bold; color: #d9534f; margin: 20px 0; padding: 15px; background: #fdf5f5; border: 1px solid #d9534f; border-radius: 5px; line-height: 1.5; }
         
         #video-wrapper { display: none; position: relative; width: 100%; aspect-ratio: 16 / 9; margin-top: 20px; background: #000; border-radius: 8px; overflow: hidden; }
         #player { width: 100%; height: 100%; }
         #video-shield { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; background: transparent; }
         
+        /* QUIZ STYLES */
+        #quiz-container { display: none; margin-top: 20px; text-align: left; background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #ccc; }
+        .question { margin-bottom: 20px; }
+        .question p { font-weight: bold; margin-bottom: 10px; }
+        .question label { display: block; margin-bottom: 8px; font-size: 15px; cursor: pointer; }
+        .question input[type="radio"] { margin-right: 10px; transform: scale(1.2); }
+
         #form-container { display: none; margin-top: 20px; }
         iframe.gform { width: 100%; height: 600px; border: none; }
         
-        .btn { padding: 15px 30px; font-size: 18px; background-color: #0056b3; color: white; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
+        .btn { padding: 15px 30px; font-size: 18px; background-color: #0056b3; color: white; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
         .btn:disabled { background-color: #999; }
         #play-btn { display: none; margin-top: 15px; }
+        
+        .success-box { background-color: #d4edda; color: #155724; padding: 20px; border-radius: 8px; border: 1px solid #c3e6cb; margin-top: 20px; text-align: center; line-height: 1.5; }
+        .audio-btn { background-color: #f8f9fa; border: 1px solid #ced4da; color: #495057; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-size: 14px; margin-top: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -32,24 +44,69 @@
     <div id="app-container">
         <h2>टर्मिनल सुरक्षा सत्यापन</h2>
         
+        <!-- STEP 1: Name, TT Number, and License Input -->
         <div id="verify-container">
-            <p>अपनी ट्रेनिंग स्थिति की जांच करने के लिए अपना <strong>ड्राइविंग लाइसेंस नंबर</strong> दर्ज करें।</p>
-            <input type="text" id="license-input" placeholder="उदाहरण: GJ0120240012345" required>
+            <p>अपनी ट्रेनिंग स्थिति की जांच करने के लिए विवरण दर्ज करें।</p>
+            <button class="audio-btn" onclick="speakText('अपनी ट्रेनिंग स्थिति की जांच करने के लिए अपना नाम, टैंकर नंबर और ड्राइविंग लाइसेंस नंबर दर्ज करें।')">🔊 निर्देश सुनें</button>
+            <br><br>
+            
+            <input type="text" id="driver-name-input" placeholder="ड्राइवर का नाम (NAME)" required autocomplete="off">
+            <input type="text" id="tt-number-input" placeholder="टैंकर नंबर (TT NUMBER e.g., GJ12AB3456)" required autocomplete="off">
+            <input type="text" id="license-input" placeholder="लाइसेंस नंबर (DL NUMBER)" required autocomplete="off">
+            
             <button id="check-btn" class="btn" onclick="checkDatabase()">स्थिति जांचें</button>
             <div id="status-msg"></div>
         </div>
 
-        <div id="location-status">GPS लोकेशन जांची जा रही है... कृपया 'Allow' पर टैप करें।</div>
+        <div id="location-status"></div>
 
+        <!-- STEP 2: Video Panel -->
         <div id="video-wrapper">
             <div id="video-shield"></div> 
             <div id="player"></div>
         </div>
         <button id="play-btn" class="btn">वीडियो शुरू करें</button>
 
+        <!-- STEP 3: The Gateway Quiz -->
+        <div id="quiz-container">
+            <h3 style="color: #002d72; margin-top: 0;">सुरक्षा प्रश्नोत्तरी (Safety Quiz)</h3>
+            <p style="color: #d9534f; font-weight: bold;">पास होने के लिए 3 में से कम से कम 2 सवालों के सही जवाब दें।</p>
+            
+            <div class="question">
+                <p>1. टर्मिनल के अंदर गाड़ी की स्पीड लिमिट क्या है?</p>
+                <label><input type="radio" name="q1" value="wrong"> 30 km/h</label>
+                <label><input type="radio" name="q1" value="correct"> 10 km/h</label>
+                <label><input type="radio" name="q1" value="wrong"> 50 km/h</label>
+            </div>
+
+            <div class="question">
+                <p>2. आपातकालीन स्थिति (इमरजेंसी) होने पर आप क्या करेंगे?</p>
+                <label><input type="radio" name="q2" value="wrong"> घबराकर इधर-उधर भागेंगे</label>
+                <label><input type="radio" name="q2" value="wrong"> अपनी गाड़ी लेकर तुरंत बाहर भागेंगे</label>
+                <label><input type="radio" name="q2" value="correct"> सुरक्षित असेंबली पॉइंट (Assembly Point) पर जाएंगे</label>
+            </div>
+
+            <div class="question">
+                <p>3. LPG लोडिंग/अनलोडिंग से पहले गाड़ी को 'अर्थिंग' (Earthing) से क्यों जोड़ा जाता है?</p>
+                <label><input type="radio" name="q3" value="wrong"> गाड़ी को साफ रखने के लिए</label>
+                <label><input type="radio" name="q3" value="correct"> स्टैटिक बिजली (Sparks) और आग से बचने के लिए</label>
+                <label><input type="radio" name="q3" value="wrong"> गाड़ी का माइलेज बढ़ाने के लिए</label>
+            </div>
+
+            <button class="btn" onclick="submitQuiz()">जवाब सबमिट करें</button>
+        </div>
+
+        <!-- STEP 4: Success & Form -->
         <div id="form-container">
-            <h3>ट्रेनिंग पूरी हुई। कृपया अपना विवरण दर्ज करें:</h3>
-            <iframe class="gform" src="https://docs.google.com/forms/d/e/1FAIpQLSdlLC04kRj8tT4mE4QiepU_Jz1JtS8aGKjwvyHdDqO20xLvcw/viewform?embedded=true"></iframe>
+            <div class="success-box" style="margin-bottom: 20px;">
+                <h3 style="margin-top:0; color: #155724;">🎉 ट्रेनिंग पूरी हुई!</h3>
+                <p>आपका सुरक्षा सर्टिफिकेट आपके फोन पर डाउनलोड हो गया है।</p>
+                <p>कृपया नीचे अपना डेटा सबमिट करें।</p>
+                <button class="audio-btn" onclick="speakText('ट्रेनिंग पूरी हुई। आपका सुरक्षा सर्टिफिकेट आपके फोन पर डाउनलोड हो गया है। कृपया नीचे दिए गए फॉर्म को सबमिट करें।')">🔊 सुनें</button>
+            </div>
+            
+            <!-- Google Form Iframe -->
+            <iframe id="gform-iframe" class="gform" src="https://docs.google.com/forms/d/e/1FAIpQLSdlLC04kRj8tT4mE4QiepU_Jz1JtS8aGKjwvyHdDqO20xLvcw/viewform?embedded=true"></iframe>
         </div>
     </div>
 
@@ -68,28 +125,82 @@
         const locStatus = document.getElementById('location-status');
         const videoWrapper = document.getElementById('video-wrapper');
         const playBtn = document.getElementById('play-btn');
+        const quizContainer = document.getElementById('quiz-container');
+        const formContainer = document.getElementById('form-container');
+        
+        const nameInput = document.getElementById('driver-name-input');
+        const ttInput = document.getElementById('tt-number-input');
+        const licenseInput = document.getElementById('license-input');
+        
+        let globalDriverName = "";
+        let globalTTNumber = "";
+        let globalLicenseNumber = "";
 
-        // Pings Google Sheets to check the license
+        // ==========================================
+        // FEATURE: REMEMBER ME
+        // ==========================================
+        window.onload = function() {
+            if(localStorage.getItem('savedDriverName')) nameInput.value = localStorage.getItem('savedDriverName');
+            if(localStorage.getItem('savedTTNumber')) ttInput.value = localStorage.getItem('savedTTNumber');
+            if(localStorage.getItem('savedLicense')) licenseInput.value = localStorage.getItem('savedLicense');
+        };
+
+        // ==========================================
+        // FEATURE: SMART TYPING
+        // ==========================================
+        nameInput.addEventListener('input', function(e) { this.value = this.value.toUpperCase().replace(/[^A-Z\s]/g, ''); });
+        ttInput.addEventListener('input', function(e) { this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
+        licenseInput.addEventListener('input', function(e) { this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
+
+        // ==========================================
+        // FEATURE: TEXT-TO-SPEECH
+        // ==========================================
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); 
+                let utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'hi-IN'; 
+                utterance.rate = 0.9; 
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // ==========================================
+        // STEP 1: DATABASE CHECK
+        // ==========================================
         function checkDatabase() {
-            const license = document.getElementById('license-input').value.trim();
-            if(!license) { alert("कृपया अपना ड्राइविंग लाइसेंस नंबर दर्ज करें"); return; }
+            globalDriverName = nameInput.value.trim();
+            globalTTNumber = ttInput.value.trim();
+            globalLicenseNumber = licenseInput.value.trim();
+            
+            if(!globalDriverName || !globalTTNumber || !globalLicenseNumber) { 
+                alert("कृपया सभी जानकारी (नाम, टैंकर नंबर, और लाइसेंस नंबर) दर्ज करें।"); 
+                return; 
+            }
+
+            localStorage.setItem('savedDriverName', globalDriverName);
+            localStorage.setItem('savedTTNumber', globalTTNumber);
+            localStorage.setItem('savedLicense', globalLicenseNumber);
 
             document.getElementById('check-btn').innerText = "डेटाबेस की जांच हो रही है...";
             document.getElementById('check-btn').disabled = true;
 
-            fetch(`${GOOGLE_SCRIPT_URL}?license=${encodeURIComponent(license)}`)
+            fetch(`${GOOGLE_SCRIPT_URL}?license=${encodeURIComponent(globalLicenseNumber)}`)
                 .then(response => response.json())
                 .then(data => {
                     if(data.valid === true) {
-                        // VALID! Clear them for entry.
                         verifyContainer.style.display = 'none';
-                        document.getElementById('app-container').innerHTML += `<div style="background-color: #d4edda; color: #155724; padding: 20px; border-radius: 8px; border: 1px solid #c3e6cb; margin-top: 20px;">
+                        const successMsg = "आपकी ट्रेनिंग मान्य है। कृपया सुरक्षा गेट की ओर बढ़ें।";
+                        document.getElementById('app-container').innerHTML += `<div class="success-box">
                             <h3 style="margin-top:0;">✅ प्रवेश स्वीकृत</h3>
-                            <p>लाइसेंस नंबर: <strong>${license}</strong></p>
-                            <p>आपकी ट्रेनिंग मान्य है। कृपया सुरक्षा गेट की ओर बढ़ें।</p>
+                            <p>नाम: <strong>${globalDriverName}</strong></p>
+                            <p>टैंकर: <strong>${globalTTNumber}</strong></p>
+                            <p>लाइसेंस: <strong>${globalLicenseNumber}</strong></p>
+                            <p>${successMsg}</p>
+                            <button class="audio-btn" onclick="speakText('${successMsg}')">🔊 सुनें</button>
                         </div>`;
+                        speakText(successMsg); 
                     } else {
-                        // INVALID! Start the GPS and Video process.
                         verifyContainer.style.display = 'none';
                         startGPSCheck();
                     }
@@ -101,9 +212,13 @@
                 });
         }
 
-        // GPS Logic with Smart Error Handling
+        // ==========================================
+        // STEP 2: GPS LOGIC
+        // ==========================================
         function startGPSCheck() {
             locStatus.style.display = 'block';
+            locStatus.innerHTML = `GPS लोकेशन जांची जा रही है... कृपया 'Allow' पर टैप करें।`;
+            
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     function(position) {
@@ -113,20 +228,23 @@
                             videoWrapper.style.display = 'block';
                             playBtn.style.display = 'block';
                         } else {
-                            locStatus.innerText = `लोकेशन त्रुटि: आप गेट से ${Math.round(dist)} मीटर दूर हैं। आपका सुरक्षा गेट पर होना अनिवार्य है।`;
+                            const errText = `लोकेशन त्रुटि: आप गेट से ${Math.round(dist)} मीटर दूर हैं। आपका सुरक्षा गेट पर होना अनिवार्य है।`;
+                            locStatus.innerHTML = `${errText} <br><button class="audio-btn" onclick="speakText('${errText}')">🔊 सुनें</button>`;
                         }
                     },
                     function(error) { 
-                        // SMART ERROR DETECTION
                         if (error.code === error.PERMISSION_DENIED) {
-                            locStatus.innerHTML = `<span style="font-size: 18px;"><b>त्रुटि: आपने लोकेशन ब्लॉक कर दी है (Deny)।</b></span><br><br>
+                            const blockText = "त्रुटि: आपने लोकेशन ब्लॉक कर दी है। कृपया ब्राउज़र सेटिंग्स में जाकर लोकेशन एलाऊ करें और पेज रिफ्रेश करें।";
+                            locStatus.innerHTML = `<span style="font-size: 18px;"><b>त्रुटि: लोकेशन ब्लॉक है (Deny)</b></span><br><br>
                             <b>इसे ठीक करने के लिए:</b><br>
-                            1. ब्राउज़र के ऊपर URL बार में <b>ताला (Lock 🔒)</b> आइकन पर क्लिक करें।<br>
-                            2. <b>Permissions</b> (अनुमतियां) में जाएं।<br>
+                            1. URL बार में <b>ताला (Lock 🔒)</b> पर क्लिक करें।<br>
+                            2. <b>Permissions</b> में जाएं।<br>
                             3. Location को <b>Allow</b> करें।<br>
-                            4. इस पेज को <b>रिफ्रेश</b> करें।`;
+                            4. इस पेज को <b>रिफ्रेश</b> करें।<br>
+                            <button class="audio-btn" onclick="speakText('${blockText}')">🔊 सुनें</button>`;
                         } else {
-                            locStatus.innerText = "त्रुटि: आपका GPS बंद है या सिग्नल नहीं मिल रहा है। कृपया फोन की लोकेशन चालू करें।";
+                            const signalText = "त्रुटि: आपका GPS बंद है या सिग्नल नहीं मिल रहा है। कृपया फोन की लोकेशन चालू करें।";
+                            locStatus.innerHTML = `${signalText} <br><button class="audio-btn" onclick="speakText('${signalText}')">🔊 सुनें</button>`;
                         }
                     },
                     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -143,14 +261,16 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); 
         }
 
-        // YouTube API
+        // ==========================================
+        // YOUTUBE ENGINE
+        // ==========================================
         var tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api";
         var firstScriptTag = document.getElementsByTagName('script')[0]; firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
         var player;
         
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
-                videoId: 'Ju-K6c7FiMw', 
+                videoId: 'JKeDqTbi7_M',
                 playerVars: { 'playsinline': 1, 'controls': 0, 'disablekb': 1, 'rel': 0, 'modestbranding': 1 },
                 events: { 'onStateChange': onPlayerStateChange }
             });
@@ -159,10 +279,100 @@
         playBtn.addEventListener('click', function() { player.playVideo(); this.style.display = 'none'; });
 
         function onPlayerStateChange(event) {
+            // WHEN VIDEO ENDS, SHOW THE QUIZ
             if (event.data == YT.PlayerState.ENDED) {
                 videoWrapper.style.display = 'none';
-                document.getElementById('form-container').style.display = 'block';
+                quizContainer.style.display = 'block';
             }
+        }
+
+        // ==========================================
+        // STEP 3: THE QUIZ LOGIC
+        // ==========================================
+        function submitQuiz() {
+            let score = 0;
+            
+            // Check answers
+            if(document.querySelector('input[name="q1"]:checked')?.value === 'correct') score++;
+            if(document.querySelector('input[name="q2"]:checked')?.value === 'correct') score++;
+            if(document.querySelector('input[name="q3"]:checked')?.value === 'correct') score++;
+
+            if(score >= 2) {
+                // PASS! 
+                quizContainer.style.display = 'none';
+                formContainer.style.display = 'block';
+                generateAndDownloadPDF();
+                
+            } else {
+                // FAIL! Loop video
+                const failMsg = `Insufficient Training Knowledge! आपने 3 में से सिर्फ ${score} का सही जवाब दिया। आपको पास होने के लिए 2 सही जवाब चाहिए। कृपया वीडियो फिर से ध्यान से देखें।`;
+                alert(failMsg);
+                speakText(failMsg);
+                
+                // Reset Quiz Selections
+                document.querySelectorAll('input[type="radio"]').forEach(radio => radio.checked = false);
+                
+                quizContainer.style.display = 'none';
+                videoWrapper.style.display = 'block';
+                
+                // Restart Video
+                player.seekTo(0);
+                player.playVideo();
+            }
+        }
+
+        // ==========================================
+        // PDF GENERATION ENGINE
+        // ==========================================
+        function generateAndDownloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a5' });
+            
+            const today = new Date();
+            const dateStr = today.getDate() + '/' + (today.getMonth()+1) + '/' + today.getFullYear();
+            
+            doc.setFillColor(248, 249, 250); doc.rect(0, 0, 210, 148, 'F');
+            doc.setDrawColor(0, 45, 114); doc.setLineWidth(2); doc.rect(5, 5, 200, 138);
+            doc.setDrawColor(212, 175, 55); doc.setLineWidth(0.5); doc.rect(7, 7, 196, 134);
+            
+            const companyLogoBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="; 
+            doc.addImage(companyLogoBase64, 'PNG', 15, 12, 25, 25);
+
+            doc.setTextColor(50, 50, 50); doc.setFont("Helvetica", "bold"); doc.setFontSize(10);
+            doc.text("MUNDRA LPG TERMINAL", 105, 20, { align: "center" });
+
+            doc.setTextColor(0, 45, 114); doc.setFont("Helvetica", "bold"); doc.setFontSize(22);
+            doc.text("TERMINAL SAFETY TRAINING", 105, 30, { align: "center" });
+            
+            doc.setTextColor(100, 100, 100); doc.setFont("Helvetica", "normal"); doc.setFontSize(12);
+            doc.text("CERTIFICATE OF COMPLETION", 105, 40, { align: "center" });
+            
+            doc.setTextColor(50, 50, 50); doc.setFontSize(11);
+            doc.text("This is to certify that the driver named below has successfully watched", 105, 55, { align: "center" });
+            doc.text("and completed the mandatory Terminal Safety Induction Training.", 105, 62, { align: "center" });
+            
+            // Driver Name
+            doc.setTextColor(0, 0, 0); doc.setFont("Helvetica", "bold"); doc.setFontSize(16);
+            doc.text(globalDriverName, 105, 78, { align: "center" });
+            doc.setDrawColor(150, 150, 150); doc.setLineWidth(0.2); doc.line(45, 80, 165, 80);
+            
+            doc.setTextColor(70, 70, 70); doc.setFont("Helvetica", "normal"); doc.setFontSize(11);
+            doc.text("DRIVER NAME", 105, 85, { align: "center" });
+            
+            // DL Number, TT Number, and Date 
+            doc.setTextColor(0, 0, 0); doc.setFont("Helvetica", "bold"); doc.setFontSize(11);
+            doc.text("DL NO: " + globalLicenseNumber, 25, 100);
+            doc.text("TANKER NO: " + globalTTNumber, 25, 110);
+            doc.text("DATE: " + dateStr, 150, 105);
+            
+            // Verified Stamp
+            doc.setDrawColor(40, 167, 69); doc.setLineWidth(0.5); doc.rect(80, 113, 50, 15);
+            doc.setTextColor(40, 167, 69); doc.setFont("Helvetica", "bold"); doc.setFontSize(10);
+            doc.text("VERIFIED & PASSED", 105, 120, { align: "center" });
+            doc.setFontSize(7); doc.text("VALID FOR 180 DAYS", 105, 125, { align: "center" });
+            
+            // Saves file with the specific DL number
+            doc.save("Safety_Certificate_" + globalLicenseNumber + ".pdf");
         }
     </script>
 </body>
