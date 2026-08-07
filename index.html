@@ -7,9 +7,9 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 0; background-color: #e9ecef; color: #333; }
         #app-container { max-width: 450px; margin: 0 auto; background: white; min-height: 100vh; padding: 20px; box-sizing: border-box; text-align: center; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
-        h2 { color: #002d72; margin-top: 10px; }
+        h2 { color: #002d72; margin-top: 10px; margin-bottom: 25px; }
         
-        #verify-container { margin-top: 30px; }
+        #verify-container { margin-top: 10px; }
         input[type="text"] { width: 90%; padding: 15px; font-size: 16px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; text-transform: uppercase; font-weight: bold; }
         #status-msg { margin-top: 15px; font-weight: bold; }
 
@@ -34,21 +34,37 @@
         #play-btn { display: none; margin-top: 15px; }
         
         .success-box { background-color: #d4edda; color: #155724; padding: 20px; border-radius: 8px; border: 1px solid #c3e6cb; margin-top: 20px; text-align: center; line-height: 1.5; }
+        
+        .instruction-box { background-color: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; margin-bottom: 20px; text-align: left; border-radius: 5px; }
+        .instruction-box h4 { color: #856404; margin-top: 0; margin-bottom: 10px; font-size: 16px; }
+        .instruction-box ul { color: #856404; font-size: 14px; padding-left: 20px; margin: 0; line-height: 1.6; }
     </style>
 </head>
 <body>
 
     <div id="app-container">
-        <h2>टर्मिनल सुरक्षा प्रमाणीकरण</h2>
+        <h2>टर्मिनल सुरक्षा ट्रेनिंग</h2>
         
-        <!-- STEP 1: License Input Only -->
+        <!-- STEP 1: Instructions & License Input -->
         <div id="verify-container">
-            <p>अपनी ट्रेनिंग स्थिति की जांच करने के लिए विवरण दर्ज करें।</p>
-            <br>
+            
+            <!-- NEW INSTRUCTION BOX FOR DRIVERS -->
+            <div class="instruction-box">
+                <h4>⚠️ शुरू करने से पहले ध्यान दें:</h4>
+                <ul>
+                    <li>अपने फोन का <b>इंटरनेट (Mobile Data)</b> चालू रखें।</li>
+                    <li>अपने फोन की <b>लोकेशन (GPS)</b> चालू रखें।</li>
+                    <li>जब स्क्रीन पर लोकेशन मांगे, तो <b>'Allow'</b> पर क्लिक करें।</li>
+                    <li>वीडियो को बिना स्किप किए <b>पूरा देखें</b>।</li>
+                    <li>वीडियो के बाद 10 सवालों का टेस्ट होगा (पास होने के लिए <b>8 सही जवाब</b> अनिवार्य हैं)।</li>
+                </ul>
+            </div>
+
+            <p style="font-weight: bold; color: #002d72;">अपनी ट्रेनिंग शुरू करने के लिए लाइसेंस दर्ज करें:</p>
             
             <input type="text" id="license-input" placeholder="लाइसेंस नंबर दर्ज करें (DL Number)" required autocomplete="off">
             
-            <button id="check-btn" class="btn" onclick="checkDatabase()">स्थिति जांचें</button>
+            <button id="check-btn" class="btn" onclick="checkDatabase()">आगे बढ़ें</button>
             <div id="status-msg"></div>
         </div>
 
@@ -169,7 +185,7 @@
                 })
                 .catch(error => {
                     statusMsg.innerText = "नेटवर्क त्रुटि। कृपया पुनः प्रयास करें।";
-                    document.getElementById('check-btn').innerText = "स्थिति जांचें";
+                    document.getElementById('check-btn').innerText = "आगे बढ़ें";
                     document.getElementById('check-btn').disabled = false;
                 });
         }
@@ -179,7 +195,7 @@
         // ==========================================
         function startGPSCheck() {
             locStatus.style.display = 'block';
-            locStatus.innerHTML = `GPS लोकेशन जांची जा रही है... कृपया 'Allow' पर टैप करें।`;
+            locStatus.innerHTML = `GPS लोकेशन जांची जा रही है... कृपया स्क्रीन पर <b>'Allow'</b> पर क्लिक करें।`;
             
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
